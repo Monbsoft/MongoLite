@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet build:*)",
+      "Bash(git status:*)",
+      "Bash(del \"Monbsoft.MongoLite.MApp\\\\MainPage.xaml\")",
+      "Bash(del \"Monbsoft.MongoLite.MApp\\\\MainPage.xaml.cs\")"
+    ]
+  }
+}

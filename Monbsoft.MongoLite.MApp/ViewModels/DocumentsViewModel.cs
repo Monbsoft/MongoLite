@@ -39,14 +39,11 @@ public partial class DocumentsViewModel : ObservableObject
     }
 
     public IAsyncRelayCommand RefreshCommand { get; }
-    public IAsyncRelayCommand<MongoDocumentInfo> SelectDocumentCommand { get; }
 
     public DocumentsViewModel(MongoDbService mongoDbService)
     {
         _mongoDbService = mongoDbService;
-        
         RefreshCommand = new AsyncRelayCommand(LoadDocumentsAsync);
-        SelectDocumentCommand = new AsyncRelayCommand<MongoDocumentInfo>(SelectDocumentAsync);
     }
 
     public async Task LoadDocumentsAsync()
@@ -75,19 +72,10 @@ public partial class DocumentsViewModel : ObservableObject
         }
     }
 
-    public async Task SelectDocumentAsync(MongoDocumentInfo document)
-    {
-        if (document == null)
-            return;
-
-        // Navigate to document detail page with the selected document
-        await Shell.Current.GoToAsync($"//document-detail?collectionName={CollectionName}&documentId={document.Id}");
-    }
-
     public async Task InitializeAsync(string collectionName)
     {
         CollectionName = collectionName;
-        
+
         if (_mongoDbService.IsConnected)
         {
             await LoadDocumentsAsync();

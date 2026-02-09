@@ -1,68 +1,41 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Monbsoft.MongoLite.MApp.ViewModels"
              x:Class="Monbsoft.MongoLite.MApp.Pages.ConnectionPage"
              x:DataType="viewmodels:ConnectionViewModel"
              Title="MongoDB Connection">
 
-    <Grid Padding="20">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <ScrollView>
+        <VerticalStackLayout Padding="30" Spacing="15" MaximumWidthRequest="500">
 
-        <!-- Title -->
-        <Label Grid.Row="0" 
-               Text="MongoDB Desktop Viewer" 
-               FontSize="24" 
-               FontAttributes="Bold" 
-               HorizontalOptions="Center" 
-               Margin="0,0,0,20" />
+            <Label Text="MongoDB Desktop Viewer"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   Margin="0,0,0,20" />
 
-        <!-- Connection String Input -->
-        <Label Grid.Row="1" 
-               Text="Connection String:" 
-               FontAttributes="Bold" />
-        <Entry Grid.Row="2" 
-                x:DataType="viewmodels:ConnectionViewModel"
-                Text="{Binding ConnectionString}" 
-                Placeholder="mongodb://admin:password@localhost:27017/testdb"
-                Margin="0,10" />
+            <Label Text="Connection String:"
+                   FontAttributes="Bold" />
 
-        <!-- Error Message -->
-        <Label Grid.Row="3" 
-                Text="{Binding ErrorMessage}" 
-                TextColor="Red" 
-                IsVisible="{Binding ErrorMessage, Converter={StaticResource BoolToVisibilityConverter}}" 
-                Margin="0,10" />
+            <Entry Text="{Binding ConnectionString}"
+                   Placeholder="mongodb://admin:password@localhost:27017/testdb" />
 
-        <!-- Action Buttons -->
-        <StackLayout Grid.Row="4" Orientation="Horizontal" HorizontalOptions="Center" Margin="0,0,20,0">
-            <Button Text="Connect" 
-                    Command="{Binding ConnectCommand}" 
-                    IsEnabled="{Binding IsNotConnecting}"
-                    HorizontalOptions="FillAndExpand"
-                    Margin="5,0,5,0"
-                    Width="150"
-                    Loading="{Binding IsConnecting}" />
-            <Button Text="Test" 
-                    Command="{Binding TestConnectionCommand}" 
-                    IsEnabled="{Binding IsNotConnecting}"
-                    HorizontalOptions="FillAndExpand"
-                    Margin="5,0,5,0"
-                    Width="150" />
-        </StackLayout>
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="Red" />
 
-        <!-- Docker Quick Connect -->
-        <Button Grid.Row="5" 
-                Text="Use Docker (Quick Start)" 
-                Command="{Binding UseDockerCommand}" 
-                HorizontalOptions="Center" 
-                Margin="0,20,0,0"
-                Width="250" />
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                <Button Text="Connect"
+                        Command="{Binding ConnectCommand}" />
+                <Button Text="Test"
+                        Command="{Binding TestConnectionCommand}" />
+            </HorizontalStackLayout>
 
-    </Grid>
+            <ActivityIndicator IsRunning="{Binding IsConnecting}"
+                               IsVisible="{Binding IsConnecting}"
+                               HorizontalOptions="Center" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
 </ContentPage>

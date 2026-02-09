@@ -32,14 +32,11 @@ public partial class CollectionsViewModel : ObservableObject
     }
 
     public IAsyncRelayCommand RefreshCommand { get; }
-    public IAsyncRelayCommand<MongoCollectionInfo> SelectCollectionCommand { get; }
 
     public CollectionsViewModel(MongoDbService mongoDbService)
     {
         _mongoDbService = mongoDbService;
-        
         RefreshCommand = new AsyncRelayCommand(LoadCollectionsAsync);
-        SelectCollectionCommand = new AsyncRelayCommand<MongoCollectionInfo>(SelectCollectionAsync);
     }
 
     public async Task LoadCollectionsAsync()
@@ -66,15 +63,6 @@ public partial class CollectionsViewModel : ObservableObject
         {
             IsLoading = false;
         }
-    }
-
-    private async Task SelectCollectionAsync(MongoCollectionInfo collection)
-    {
-        if (collection == null)
-            return;
-
-        // Navigate to documents page with the selected collection
-        await Shell.Current.GoToAsync($"//documents?collectionName={collection.Name}");
     }
 
     public async Task InitializeAsync()

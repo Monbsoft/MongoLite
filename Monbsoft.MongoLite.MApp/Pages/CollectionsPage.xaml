@@ -1,45 +1,59 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Monbsoft.MongoLite.MApp.ViewModels"
+             xmlns:models="clr-namespace:Monbsoft.MongoLite.MApp.Models"
              x:Class="Monbsoft.MongoLite.MApp.Pages.CollectionsPage"
+             x:DataType="viewmodels:CollectionsViewModel"
              Title="Collections">
 
-    <Grid Padding="20">
+    <Grid Padding="20" RowSpacing="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Label Grid.Row="0" 
-               Text="MongoDB Collections" 
-               FontSize="20" 
-               FontAttributes="Bold" 
-               Margin="0,0,20,0" />
+        <Label Grid.Row="0"
+               Text="MongoDB Collections"
+               FontSize="20"
+               FontAttributes="Bold" />
 
-        <!-- Collections List -->
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Collections}">
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center" />
+
+        <CollectionView Grid.Row="2"
+                        ItemsSource="{Binding Collections}"
+                        SelectionMode="Single"
+                        SelectionChanged="OnCollectionSelected">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <ViewCell>
-                        <Grid Padding="15,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            
-                            <Label Grid.Column="0" 
-                                   Text="{Binding Name}" 
-                                   FontAttributes="Bold" 
-                                   VerticalOptions="Center" />
-                            <Label Grid.Column="1" 
-                                   Text="{Binding DocumentCount, StringFormat='Documents: {0}'}" 
-                                   VerticalOptions="Center" 
-                                   Margin="10,0,0,0" />
-                        </Grid>
-                    </ViewCell>
+                <DataTemplate x:DataType="models:MongoCollectionInfo">
+                    <Grid Padding="15,10" ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Label Grid.Column="0"
+                               Text="{Binding Name}"
+                               FontAttributes="Bold"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding DocumentCount, StringFormat='{0} docs'}"
+                               VerticalOptions="Center"
+                               TextColor="Gray" />
+                    </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <Label Grid.Row="3"
+               Text="{Binding ErrorMessage}"
+               TextColor="Red"
+               IsVisible="{Binding ErrorMessage.Length}" />
     </Grid>
+
 </ContentPage>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Monbsoft.MongoLite.MApp.ViewModels"
+             x:Class="Monbsoft.MongoLite.MApp.Pages.DocumentDetailPage"
+             x:DataType="viewmodels:DocumentDetailViewModel"
+             Title="Document Detail">
+
+    <Grid Padding="20" RowSpacing="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Label Grid.Row="0"
+               Text="{Binding DocumentId, StringFormat='Document: {0}'}"
+               FontSize="16"
+               FontAttributes="Bold" />
+
+        <ActivityIndicator Grid.Row="1"
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center" />
+
+        <Editor Grid.Row="2"
+                Text="{Binding Json}"
+                FontSize="14"
+                AutoSize="TextChanges">
+            <Editor.FontFamily>
+                <OnPlatform x:TypeArguments="x:String">
+                    <On Platform="WinUI" Value="Consolas" />
+                    <On Platform="MacCatalyst" Value="Menlo" />
+                </OnPlatform>
+            </Editor.FontFamily>
+        </Editor>
+
+        <Label Grid.Row="3"
+               Text="{Binding ErrorMessage}"
+               TextColor="Red" />
+
+        <HorizontalStackLayout Grid.Row="4" Spacing="10" HorizontalOptions="Center">
+            <Button Text="Save"
+                    Command="{Binding SaveCommand}"
+                    IsEnabled="{Binding IsModified}"
+                    BackgroundColor="Green"
+                    TextColor="White" />
+            <Button Text="Delete"
+                    Command="{Binding DeleteCommand}"
+                    BackgroundColor="Red"
+                    TextColor="White" />
+        </HorizontalStackLayout>
+    </Grid>
+
+</ContentPage>

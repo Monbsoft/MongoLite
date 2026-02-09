@@ -1,7 +1,5 @@
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Bson;
-using System.Text.Json;
 using Monbsoft.MongoLite.MApp.Models;
 
 namespace Monbsoft.MongoLite.MApp.Services;
@@ -17,15 +15,16 @@ public class MongoDbService
     {
         try
         {
+            var mongoUrl = MongoUrl.Create(connectionString);
+            if (string.IsNullOrWhiteSpace(mongoUrl.DatabaseName))
+                throw new ArgumentException("Connection string must include a database name (e.g. mongodb://host:port/mydb).");
+
             _client = new MongoClient(connectionString);
-            
-            // Test the connection
-            var databaseName = MongoUrl.Create(connectionString).DatabaseName;
-            _database = _client.GetDatabase(databaseName);
-            
+            _database = _client.GetDatabase(mongoUrl.DatabaseName);
+
             // Ping the database to verify connection
-            await _database.RunCommandAsync((Command<BsonDocument>)"{ping:1}");
-            
+            await _database.RunCommandAsync((MongoDB.Driver.Command<BsonDocument>)"{ping:1}");
+
             return true;
         }
         catch (Exception ex)
@@ -42,14 +41,15 @@ public class MongoDbService
 
         try
         {
-            var collections = await _database.ListCollectionNamesAsync();
+            var cursor = await _database.ListCollectionNamesAsync();
+            var collectionNames = await cursor.ToListAsync();
             var collectionInfos = new List<MongoCollectionInfo>();
 
-            foreach (var collectionName in collections)
+            foreach (var collectionName in collectionNames)
             {
                 var collection = _database.GetCollection<BsonDocument>(collectionName);
                 var count = await collection.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty);
-                
+
                 collectionInfos.Add(new MongoCollectionInfo
                 {
                     Name = collectionName,
@@ -74,7 +74,7 @@ public class MongoDbService
         try
         {
             var collection = _database.GetCollection<BsonDocument>(collectionName);
-            
+
             var filter = FilterDefinition<BsonDocument>.Empty;
             var documents = await collection
                 .Find(filter)
@@ -84,7 +84,7 @@ public class MongoDbService
 
             return documents.Select(doc => new MongoDocumentInfo
             {
-                Id = doc["_id"].ToString(),
+                Id = doc["_id"].ToString() ?? string.Empty,
                 Json = doc.ToJson(),
                 Preview = GetPreview(doc)
             }).ToList();
@@ -104,13 +104,13 @@ public class MongoDbService
         try
         {
             var collection = _database.GetCollection<BsonDocument>(collectionName);
-            
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
+
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", ParseId(documentId));
             var document = await collection.Find(filter).FirstOrDefaultAsync();
 
             return document != null ? new MongoDocumentInfo
             {
-                Id = document["_id"].ToString(),
+                Id = document["_id"].ToString() ?? string.Empty,
                 Json = document.ToJson()
             } : null;
         }
@@ -129,12 +129,14 @@ public class MongoDbService
         try
         {
             var collection = _database.GetCollection<BsonDocument>(collectionName);
-            
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
-            var update = Builders<BsonDocument>.Update.Set("", BsonDocument.Parse(json));
 
-            var result = await collection.UpdateOneAsync(filter, update);
-            return result.ModifiedCount > 0;
+            var parsedId = ParseId(documentId);
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", parsedId);
+            var replacement = BsonDocument.Parse(json);
+            replacement["_id"] = parsedId;
+
+            var result = await collection.ReplaceOneAsync(filter, replacement);
+            return result.MatchedCount > 0;
         }
         catch (Exception ex)
         {
@@ -151,10 +153,10 @@ public class MongoDbService
         try
         {
             var collection = _database.GetCollection<BsonDocument>(collectionName);
-            
-            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
+
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", ParseId(documentId));
             var result = await collection.DeleteOneAsync(filter);
-            
+
             return result.DeletedCount > 0;
         }
         catch (Exception ex)
@@ -164,20 +166,25 @@ public class MongoDbService
         }
     }
 
-    private string GetPreview(BsonDocument document)
+    private static BsonValue ParseId(string documentId)
+    {
+        if (ObjectId.TryParse(documentId, out var objectId))
+            return objectId;
+        return new BsonString(documentId);
+    }
+
+    private static string GetPreview(BsonDocument document)
     {
         try
         {
-            // Try to get a meaningful preview from the document
             var previewElements = new List<string>();
-            
-            // Add common fields if they exist
+
             if (document.Contains("name") || document.Contains("title"))
-                previewElements.Add(document.Contains("name") ? document["name"].ToString() : document["title"].ToString());
-            
+                previewElements.Add((document.Contains("name") ? document["name"].ToString() : document["title"].ToString()) ?? string.Empty);
+
             if (document.Contains("email"))
                 previewElements.Add($"Email: {document["email"]}");
-            
+
             if (document.Contains("price"))
                 previewElements.Add($"Price: {document["price"]}");
 
@@ -191,7 +198,7 @@ public class MongoDbService
         }
         catch
         {
-            return document["_id"].ToString();
+            return document["_id"].ToString() ?? string.Empty;
         }
     }
 }

@@ -64,8 +64,12 @@ public partial class ConnectionViewModel : ObservableObject
         {
             var success = await _mongoDbService.ConnectAsync(ConnectionString);
             IsConnected = success;
-            
-            if (!success)
+
+            if (success)
+            {
+                await Shell.Current.GoToAsync("collections");
+            }
+            else
             {
                 ErrorMessage = "Failed to connect to MongoDB. Please check your connection string.";
             }

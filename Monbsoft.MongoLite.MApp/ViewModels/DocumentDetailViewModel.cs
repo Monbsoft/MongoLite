@@ -9,6 +9,7 @@ namespace Monbsoft.MongoLite.MApp.ViewModels;
 public partial class DocumentDetailViewModel : ObservableObject
 {
     private readonly MongoDbService _mongoDbService;
+    private bool _suppressModifiedTracking;
 
     private string _collectionName = string.Empty;
     private string _documentId = string.Empty;
@@ -35,7 +36,8 @@ public partial class DocumentDetailViewModel : ObservableObject
         set
         {
             SetProperty(ref _json, value);
-            IsModified = true;
+            if (!_suppressModifiedTracking)
+                IsModified = true;
         }
     }
 
@@ -64,7 +66,7 @@ public partial class DocumentDetailViewModel : ObservableObject
     public DocumentDetailViewModel(MongoDbService mongoDbService)
     {
         _mongoDbService = mongoDbService;
-        
+
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         DeleteCommand = new AsyncRelayCommand(DeleteAsync);
         LoadCommand = new AsyncRelayCommand(LoadDocumentAsync);
@@ -86,7 +88,10 @@ public partial class DocumentDetailViewModel : ObservableObject
             var document = await _mongoDbService.GetDocumentAsync(CollectionName, DocumentId);
             if (document != null)
             {
+                _suppressModifiedTracking = true;
                 Json = document.Json;
+                _suppressModifiedTracking = false;
+                IsModified = false;
             }
             else
             {
@@ -116,7 +121,6 @@ public partial class DocumentDetailViewModel : ObservableObject
 
         try
         {
-            // Validate JSON before saving
             try
             {
                 JsonDocument.Parse(Json);
@@ -128,7 +132,7 @@ public partial class DocumentDetailViewModel : ObservableObject
             }
 
             var success = await _mongoDbService.SaveDocumentAsync(CollectionName, DocumentId, Json);
-            
+
             if (success)
             {
                 IsModified = false;
@@ -163,12 +167,10 @@ public partial class DocumentDetailViewModel : ObservableObject
         try
         {
             var success = await _mongoDbService.DeleteDocumentAsync(CollectionName, DocumentId);
-            
+
             if (success)
             {
-                ErrorMessage = "Document deleted successfully!";
-                // Navigate back to documents list
-                await Shell.Current.GoToAsync($"//documents?collectionName={CollectionName}");
+                await Shell.Current.GoToAsync("..");
             }
             else
             {
@@ -191,7 +193,7 @@ public partial class DocumentDetailViewModel : ObservableObject
         DocumentId = documentId;
         IsModified = false;
         ErrorMessage = string.Empty;
-        
+
         if (_mongoDbService.IsConnected)
         {
             await LoadDocumentAsync();
