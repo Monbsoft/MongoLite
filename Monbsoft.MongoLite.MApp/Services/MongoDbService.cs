@@ -1,0 +1,197 @@
+using MongoDB.Bson;
+using MongoDB.Driver;
+using MongoDB.Bson;
+using System.Text.Json;
+using Monbsoft.MongoLite.MApp.Models;
+
+namespace Monbsoft.MongoLite.MApp.Services;
+
+public class MongoDbService
+{
+    private IMongoDatabase? _database;
+    private IMongoClient? _client;
+
+    public bool IsConnected => _database != null;
+
+    public async Task<bool> ConnectAsync(string connectionString)
+    {
+        try
+        {
+            _client = new MongoClient(connectionString);
+            
+            // Test the connection
+            var databaseName = MongoUrl.Create(connectionString).DatabaseName;
+            _database = _client.GetDatabase(databaseName);
+            
+            // Ping the database to verify connection
+            await _database.RunCommandAsync((Command<BsonDocument>)"{ping:1}");
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"MongoDB connection failed: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<List<MongoCollectionInfo>> GetCollectionsAsync()
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        try
+        {
+            var collections = await _database.ListCollectionNamesAsync();
+            var collectionInfos = new List<MongoCollectionInfo>();
+
+            foreach (var collectionName in collections)
+            {
+                var collection = _database.GetCollection<BsonDocument>(collectionName);
+                var count = await collection.CountDocumentsAsync(FilterDefinition<BsonDocument>.Empty);
+                
+                collectionInfos.Add(new MongoCollectionInfo
+                {
+                    Name = collectionName,
+                    DocumentCount = (int)count
+                });
+            }
+
+            return collectionInfos.OrderBy(c => c.Name).ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get collections: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<List<MongoDocumentInfo>> GetDocumentsAsync(string collectionName, int skip = 0, int limit = 50)
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        try
+        {
+            var collection = _database.GetCollection<BsonDocument>(collectionName);
+            
+            var filter = FilterDefinition<BsonDocument>.Empty;
+            var documents = await collection
+                .Find(filter)
+                .Skip(skip)
+                .Limit(limit)
+                .ToListAsync();
+
+            return documents.Select(doc => new MongoDocumentInfo
+            {
+                Id = doc["_id"].ToString(),
+                Json = doc.ToJson(),
+                Preview = GetPreview(doc)
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get documents: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<MongoDocumentInfo?> GetDocumentAsync(string collectionName, string documentId)
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        try
+        {
+            var collection = _database.GetCollection<BsonDocument>(collectionName);
+            
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
+            var document = await collection.Find(filter).FirstOrDefaultAsync();
+
+            return document != null ? new MongoDocumentInfo
+            {
+                Id = document["_id"].ToString(),
+                Json = document.ToJson()
+            } : null;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get document: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<bool> SaveDocumentAsync(string collectionName, string documentId, string json)
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        try
+        {
+            var collection = _database.GetCollection<BsonDocument>(collectionName);
+            
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
+            var update = Builders<BsonDocument>.Update.Set("", BsonDocument.Parse(json));
+
+            var result = await collection.UpdateOneAsync(filter, update);
+            return result.ModifiedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to save document: {ex.Message}");
+            throw;
+        }
+    }
+
+    public async Task<bool> DeleteDocumentAsync(string collectionName, string documentId)
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        try
+        {
+            var collection = _database.GetCollection<BsonDocument>(collectionName);
+            
+            var filter = Builders<BsonDocument>.Filter.Eq("_id", ObjectId.Parse(documentId));
+            var result = await collection.DeleteOneAsync(filter);
+            
+            return result.DeletedCount > 0;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to delete document: {ex.Message}");
+            throw;
+        }
+    }
+
+    private string GetPreview(BsonDocument document)
+    {
+        try
+        {
+            // Try to get a meaningful preview from the document
+            var previewElements = new List<string>();
+            
+            // Add common fields if they exist
+            if (document.Contains("name") || document.Contains("title"))
+                previewElements.Add(document.Contains("name") ? document["name"].ToString() : document["title"].ToString());
+            
+            if (document.Contains("email"))
+                previewElements.Add($"Email: {document["email"]}");
+            
+            if (document.Contains("price"))
+                previewElements.Add($"Price: {document["price"]}");
+
+            if (document.Contains("age"))
+                previewElements.Add($"Age: {document["age"]}");
+
+            if (previewElements.Count == 0)
+                previewElements.Add($"ID: {document["_id"]}");
+
+            return string.Join(" | ", previewElements.Take(3));
+        }
+        catch
+        {
+            return document["_id"].ToString();
+        }
+    }
+}
