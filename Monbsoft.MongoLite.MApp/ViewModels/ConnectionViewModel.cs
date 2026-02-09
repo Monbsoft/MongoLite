@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Monbsoft.MongoLite.MApp.Models;
+using Monbsoft.MongoLite.MApp.Pages;
 using Monbsoft.MongoLite.MApp.Services;
 
 namespace Monbsoft.MongoLite.MApp.ViewModels;
@@ -8,6 +9,7 @@ namespace Monbsoft.MongoLite.MApp.ViewModels;
 public partial class ConnectionViewModel : ObservableObject
 {
     private readonly MongoDbService _mongoDbService;
+    private readonly IServiceProvider _serviceProvider;
 
     private string _connectionString = MongoConnection.DefaultDockerConnection;
     private bool _isConnected;
@@ -40,13 +42,16 @@ public partial class ConnectionViewModel : ObservableObject
 
     public IAsyncRelayCommand ConnectCommand { get; }
     public IAsyncRelayCommand TestConnectionCommand { get; }
+    public IAsyncRelayCommand OpenAdvancedFormCommand { get; }
 
-    public ConnectionViewModel(MongoDbService mongoDbService)
+    public ConnectionViewModel(MongoDbService mongoDbService, IServiceProvider serviceProvider)
     {
         _mongoDbService = mongoDbService;
-        
+        _serviceProvider = serviceProvider;
+
         ConnectCommand = new AsyncRelayCommand(ConnectAsync);
         TestConnectionCommand = new AsyncRelayCommand(TestConnectionAsync);
+        OpenAdvancedFormCommand = new AsyncRelayCommand(OpenAdvancedFormAsync);
     }
 
     private async Task ConnectAsync()
@@ -117,5 +122,18 @@ public partial class ConnectionViewModel : ObservableObject
         {
             IsConnecting = false;
         }
+    }
+
+    private async Task OpenAdvancedFormAsync()
+    {
+        var advancedPage = _serviceProvider.GetRequiredService<AdvancedConnectionPage>();
+        var advancedViewModel = _serviceProvider.GetRequiredService<AdvancedConnectionViewModel>();
+
+        advancedViewModel.SetConnectionSuccessCallback((connectionString) => 
+        {
+            ConnectionString = connectionString;
+        });
+
+        await Application.Current.MainPage.Navigation.PushModalAsync(advancedPage);
     }
 }

@@ -19,7 +19,10 @@ public class MongoDbService
             if (string.IsNullOrWhiteSpace(mongoUrl.DatabaseName))
                 throw new ArgumentException("Connection string must include a database name (e.g. mongodb://host:port/mydb).");
 
-            _client = new MongoClient(connectionString);
+            MongoClientSettings settings = MongoClientSettings.FromConnectionString(connectionString);           
+            settings.DirectConnection = true;
+
+            _client = new MongoClient(settings);
             _database = _client.GetDatabase(mongoUrl.DatabaseName);
 
             // Ping the database to verify connection

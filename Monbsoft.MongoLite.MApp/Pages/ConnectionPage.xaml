@@ -18,8 +18,14 @@
             <Label Text="Connection String:"
                    FontAttributes="Bold" />
 
-            <Entry Text="{Binding ConnectionString}"
-                   Placeholder="mongodb://admin:password@localhost:27017/testdb" />
+            <HorizontalStackLayout Spacing="10">
+                <Entry Text="{Binding ConnectionString}"
+                       Placeholder="mongodb://admin:password@localhost:27017/testdb"
+                       HorizontalOptions="FillAndExpand" />
+                <Button Text="⚙️ Advanced"
+                        Command="{Binding OpenAdvancedFormCommand}"
+                        VerticalOptions="Center" />
+            </HorizontalStackLayout>
 
             <Label Text="{Binding ErrorMessage}"
                    TextColor="Red" />
