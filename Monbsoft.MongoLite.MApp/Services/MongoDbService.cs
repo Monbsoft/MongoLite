@@ -8,8 +8,10 @@ public class MongoDbService
 {
     private IMongoDatabase? _database;
     private IMongoClient? _client;
+    private string? _selectedDatabaseName;
 
     public bool IsConnected => _database != null;
+    public string? SelectedDatabase => _selectedDatabaseName;
 
     public async Task<bool> ConnectAsync(string connectionString)
     {
@@ -67,6 +69,48 @@ public class MongoDbService
             System.Diagnostics.Debug.WriteLine($"Failed to get collections: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<List<MongoDatabaseInfo>> GetDatabasesAsync()
+    {
+        if (_client == null)
+            throw new InvalidOperationException("Not connected to MongoDB");
+
+        try
+        {
+            var databaseNames = await _client.ListDatabaseNamesAsync();
+            var databaseList = await databaseNames.ToListAsync();
+            var databaseInfos = new List<MongoDatabaseInfo>();
+
+            foreach (var dbName in databaseList)
+            {
+                var db = _client.GetDatabase(dbName);
+                var collectionNames = await db.ListCollectionNamesAsync();
+                var collectionList = await collectionNames.ToListAsync();
+
+                databaseInfos.Add(new MongoDatabaseInfo
+                {
+                    Name = dbName,
+                    CollectionCount = collectionList.Count
+                });
+            }
+
+            return databaseInfos.OrderBy(d => d.Name).ToList();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to get databases: {ex.Message}");
+            throw;
+        }
+    }
+
+    public void SelectDatabase(string databaseName)
+    {
+        if (_client == null)
+            throw new InvalidOperationException("Not connected to MongoDB");
+
+        _database = _client.GetDatabase(databaseName);
+        _selectedDatabaseName = databaseName;
     }
 
     public async Task<List<MongoDocumentInfo>> GetDocumentsAsync(string collectionName, int skip = 0, int limit = 50)
