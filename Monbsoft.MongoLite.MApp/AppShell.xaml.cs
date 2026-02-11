@@ -12,4 +12,9 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("documents", typeof(DocumentsPage));
         Routing.RegisterRoute("document-detail", typeof(DocumentDetailPage));
     }
+
+    private void OnToggleThemeClicked(object? sender, EventArgs e)
+    {
+        App.ToggleTheme();
+    }
 }

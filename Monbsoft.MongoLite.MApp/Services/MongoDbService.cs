@@ -113,7 +113,7 @@ public class MongoDbService
         _selectedDatabaseName = databaseName;
     }
 
-    public async Task<List<MongoDocumentInfo>> GetDocumentsAsync(string collectionName, int skip = 0, int limit = 50)
+    public async Task<List<MongoDocumentInfo>> GetDocumentsAsync(string collectionName, int skip = 0, int limit = 50, string? filterJson = null, string? sortField = null, bool sortAscending = true)
     {
         if (_database == null)
             throw new InvalidOperationException("Not connected to database");
@@ -122,9 +122,18 @@ public class MongoDbService
         {
             var collection = _database.GetCollection<BsonDocument>(collectionName);
 
-            var filter = FilterDefinition<BsonDocument>.Empty;
-            var documents = await collection
-                .Find(filter)
+            var filter = ParseFilter(filterJson);
+            var findFluent = collection.Find(filter);
+
+            if (!string.IsNullOrWhiteSpace(sortField))
+            {
+                var sortDefinition = sortAscending
+                    ? Builders<BsonDocument>.Sort.Ascending(sortField)
+                    : Builders<BsonDocument>.Sort.Descending(sortField);
+                findFluent = findFluent.Sort(sortDefinition);
+            }
+
+            var documents = await findFluent
                 .Skip(skip)
                 .Limit(limit)
                 .ToListAsync();
@@ -141,6 +150,16 @@ public class MongoDbService
             System.Diagnostics.Debug.WriteLine($"Failed to get documents: {ex.Message}");
             throw;
         }
+    }
+
+    public async Task<long> CountDocumentsAsync(string collectionName, string? filterJson = null)
+    {
+        if (_database == null)
+            throw new InvalidOperationException("Not connected to database");
+
+        var collection = _database.GetCollection<BsonDocument>(collectionName);
+        var filter = ParseFilter(filterJson);
+        return await collection.CountDocumentsAsync(filter);
     }
 
     public async Task<MongoDocumentInfo?> GetDocumentAsync(string collectionName, string documentId)
@@ -213,6 +232,15 @@ public class MongoDbService
         }
     }
 
+    private static FilterDefinition<BsonDocument> ParseFilter(string? filterJson)
+    {
+        if (string.IsNullOrWhiteSpace(filterJson))
+            return FilterDefinition<BsonDocument>.Empty;
+
+        var bsonFilter = BsonDocument.Parse(filterJson);
+        return new BsonDocumentFilterDefinition<BsonDocument>(bsonFilter);
+    }
+
     private static BsonValue ParseId(string documentId)
     {
         if (ObjectId.TryParse(documentId, out var objectId))
@@ -220,32 +248,44 @@ public class MongoDbService
         return new BsonString(documentId);
     }
 
-    private static string GetPreview(BsonDocument document)
+    private static string GetPreview(BsonDocument document, int maxKeys = 4, int maxValueLength = 50)
     {
         try
         {
-            var previewElements = new List<string>();
+            var lines = new List<string>();
 
-            if (document.Contains("name") || document.Contains("title"))
-                previewElements.Add((document.Contains("name") ? document["name"].ToString() : document["title"].ToString()) ?? string.Empty);
+            // _id always first
+            if (document.Contains("_id"))
+            {
+                var idValue = Truncate(document["_id"].ToString() ?? string.Empty, maxValueLength);
+                lines.Add($"_id: {idValue}");
+            }
 
-            if (document.Contains("email"))
-                previewElements.Add($"Email: {document["email"]}");
+            // Next keys in document order, skip _id
+            foreach (var element in document.Elements)
+            {
+                if (lines.Count >= maxKeys)
+                    break;
 
-            if (document.Contains("price"))
-                previewElements.Add($"Price: {document["price"]}");
+                if (element.Name == "_id")
+                    continue;
 
-            if (document.Contains("age"))
-                previewElements.Add($"Age: {document["age"]}");
+                var value = Truncate(element.Value.ToString() ?? string.Empty, maxValueLength);
+                lines.Add($"{element.Name}: {value}");
+            }
 
-            if (previewElements.Count == 0)
-                previewElements.Add($"ID: {document["_id"]}");
-
-            return string.Join(" | ", previewElements.Take(3));
+            return string.Join("\n", lines);
         }
         catch
         {
             return document["_id"].ToString() ?? string.Empty;
         }
+    }
+
+    private static string Truncate(string value, int maxLength)
+    {
+        if (value.Length <= maxLength)
+            return value;
+        return value[..maxLength] + "...";
     }
 }

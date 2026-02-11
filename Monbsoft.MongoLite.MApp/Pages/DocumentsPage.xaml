@@ -11,7 +11,10 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -20,41 +23,83 @@
                    FontSize="20"
                    FontAttributes="Bold"
                    VerticalOptions="Center" />
+            <Label Text="{Binding DocumentCountInfo}"
+                   FontSize="14"
+                   TextColor="Gray"
+                   VerticalOptions="Center" />
             <Button Text="Refresh"
                     Command="{Binding RefreshCommand}"
                     VerticalOptions="Center" />
         </HorizontalStackLayout>
 
-        <ActivityIndicator Grid.Row="1"
+        <!-- Filter -->
+        <HorizontalStackLayout Grid.Row="1" Spacing="10">
+            <Entry Text="{Binding FilterQuery}"
+                   Placeholder='{ "key": "value" }'
+                   WidthRequest="400"
+                   VerticalOptions="Center" />
+            <Button Text="Appliquer"
+                    Command="{Binding ApplyFilterCommand}"
+                    VerticalOptions="Center" />
+            <Button Text="Réinitialiser"
+                    Command="{Binding ResetFilterCommand}"
+                    VerticalOptions="Center" />
+        </HorizontalStackLayout>
+
+        <!-- Sort -->
+        <HorizontalStackLayout Grid.Row="2" Spacing="10">
+            <Label Text="Trier par :"
+                   VerticalOptions="Center"
+                   FontSize="14" />
+            <Entry Text="{Binding SortField}"
+                   Placeholder="_id, name, createdAt..."
+                   WidthRequest="200"
+                   VerticalOptions="Center" />
+            <Button Text="{Binding SortDirectionIcon}"
+                    Command="{Binding ToggleSortDirectionCommand}"
+                    VerticalOptions="Center" />
+            <Button Text="Trier"
+                    Command="{Binding ApplyFilterCommand}"
+                    VerticalOptions="Center" />
+        </HorizontalStackLayout>
+
+        <ActivityIndicator Grid.Row="3"
                            IsRunning="{Binding IsLoading}"
                            IsVisible="{Binding IsLoading}"
                            HorizontalOptions="Center" />
 
-        <CollectionView Grid.Row="2"
+        <CollectionView Grid.Row="4"
                         ItemsSource="{Binding Documents}"
                         SelectionMode="Single"
                         SelectionChanged="OnDocumentSelected">
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="models:MongoDocumentInfo">
-                    <Grid Padding="10" RowSpacing="4">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-
-                        <Label Grid.Row="0"
-                               Text="{Binding Preview}"
-                               FontAttributes="Bold" />
-                        <Label Grid.Row="1"
-                               Text="{Binding Id, StringFormat='ID: {0}'}"
-                               FontSize="12"
-                               TextColor="Gray" />
-                    </Grid>
+                    <Border Padding="10" Margin="0,2"
+                            Stroke="LightGray" StrokeThickness="1"
+                            StrokeShape="RoundRectangle 6">
+                        <Label Text="{Binding Preview}"
+                               FontSize="13"
+                               FontFamily="Consolas"
+                               LineBreakMode="TailTruncation" />
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-        <Label Grid.Row="3"
+        <!-- Pagination -->
+        <HorizontalStackLayout Grid.Row="5" Spacing="10" HorizontalOptions="Center">
+            <Button Text="◀ Précédent"
+                    Command="{Binding PreviousPageCommand}"
+                    IsEnabled="{Binding CanGoPrevious}" />
+            <Label Text="{Binding PageInfo}"
+                   VerticalOptions="Center"
+                   FontSize="14" />
+            <Button Text="Suivant ▶"
+                    Command="{Binding NextPageCommand}"
+                    IsEnabled="{Binding CanGoNext}" />
+        </HorizontalStackLayout>
+
+        <Label Grid.Row="6"
                Text="{Binding ErrorMessage}"
                TextColor="Red"
                IsVisible="{Binding ErrorMessage.Length}" />

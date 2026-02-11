@@ -6,6 +6,20 @@
     xmlns:pages="clr-namespace:Monbsoft.MongoLite.MApp.Pages"
     Title="MongoDB Desktop Viewer">
 
+    <Shell.TitleView>
+        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+            <Label Text="MongoLite"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center" />
+            <Button Text="☀/🌙"
+                    FontSize="14"
+                    Clicked="OnToggleThemeClicked"
+                    VerticalOptions="Center"
+                    HorizontalOptions="EndAndExpand" />
+        </HorizontalStackLayout>
+    </Shell.TitleView>
+
     <ShellContent
         Title="Connection"
         ContentTemplate="{DataTemplate pages:ConnectionPage}"
