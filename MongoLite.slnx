@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="Monbsoft.MongoLite.MApp/Monbsoft.MongoLite.MApp.csproj">
+    <Project Path="src/Monbsoft.MongoLite.MApp/Monbsoft.MongoLite.MApp.csproj">
       <Deploy Solution="Debug|*" />
     </Project>
   </Folder>
