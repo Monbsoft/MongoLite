@@ -4,7 +4,9 @@
       "Bash(dotnet build:*)",
       "Bash(git status:*)",
       "Bash(del \"Monbsoft.MongoLite.MApp\\\\MainPage.xaml\")",
-      "Bash(del \"Monbsoft.MongoLite.MApp\\\\MainPage.xaml.cs\")"
+      "Bash(del \"Monbsoft.MongoLite.MApp\\\\MainPage.xaml.cs\")",
+      "Bash(git mv:*)",
+      "Bash(powershell -File:*)"
     ]
   }
 }
