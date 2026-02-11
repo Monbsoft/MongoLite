@@ -7,17 +7,32 @@
     Title="MongoDB Desktop Viewer">
 
     <Shell.TitleView>
-        <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-            <Label Text="MongoLite"
+        <Grid ColumnDefinitions="Auto,*,Auto,Auto" VerticalOptions="Center" ColumnSpacing="10">
+            <Label Grid.Column="0"
+                   Text="MongoLite"
                    FontSize="18"
                    FontAttributes="Bold"
                    VerticalOptions="Center" />
-            <Button Text="☀/🌙"
-                    FontSize="14"
-                    Clicked="OnToggleThemeClicked"
+            <Border Grid.Column="1"
+                    x:Name="EnvironmentBanner"
+                    Padding="8,4"
+                    StrokeShape="RoundRectangle 4"
+                    StrokeThickness="0"
+                    IsVisible="False"
                     VerticalOptions="Center"
-                    HorizontalOptions="EndAndExpand" />
-        </HorizontalStackLayout>
+                    HorizontalOptions="Start">
+                <Label x:Name="EnvironmentLabel"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+            </Border>
+            <Button Grid.Column="3"
+                    Text="⚙"
+                    FontSize="18"
+                    Clicked="OnSettingsClicked"
+                    BackgroundColor="Transparent"
+                    VerticalOptions="Center" />
+        </Grid>
     </Shell.TitleView>
 
     <ShellContent

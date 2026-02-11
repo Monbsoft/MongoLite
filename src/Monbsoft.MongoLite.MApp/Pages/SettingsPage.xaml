@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:Monbsoft.MongoLite.MApp.ViewModels"
+             x:Class="Monbsoft.MongoLite.MApp.Pages.SettingsPage"
+             x:DataType="viewmodels:SettingsViewModel"
+             Title="Paramètres">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20">
+
+            <!-- Apparence -->
+            <Label Text="Apparence"
+                   FontSize="18"
+                   FontAttributes="Bold" />
+
+            <HorizontalStackLayout Spacing="15">
+                <Label Text="Thème sombre"
+                       VerticalOptions="Center"
+                       FontSize="14" />
+                <Switch IsToggled="{Binding IsDarkTheme}"
+                        VerticalOptions="Center" />
+                <Label Text="{Binding ThemeLabel}"
+                       VerticalOptions="Center"
+                       FontSize="14"
+                       TextColor="Gray" />
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

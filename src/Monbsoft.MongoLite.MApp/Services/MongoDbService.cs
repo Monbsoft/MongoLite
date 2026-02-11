@@ -12,6 +12,7 @@ public class MongoDbService
 
     public bool IsConnected => _database != null;
     public string? SelectedDatabase => _selectedDatabaseName;
+    public EnvironmentType CurrentEnvironment { get; set; } = EnvironmentType.Development;
 
     public async Task<bool> ConnectAsync(string connectionString)
     {

@@ -13,17 +13,6 @@ public partial class App : Application
         return new Window(new AppShell());
     }
 
-    public static void ToggleTheme()
-    {
-        if (Current is null) return;
-
-        Current.UserAppTheme = Current.UserAppTheme == AppTheme.Dark
-            ? AppTheme.Light
-            : AppTheme.Dark;
-
-        Preferences.Set("AppTheme", Current.UserAppTheme.ToString());
-    }
-
     private void LoadThemePreference()
     {
         var savedTheme = Preferences.Get("AppTheme", string.Empty);

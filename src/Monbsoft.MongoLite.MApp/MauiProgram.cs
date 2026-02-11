@@ -24,6 +24,7 @@ public static class MauiProgram
 
         // Register services
         builder.Services.AddSingleton<MongoDbService>();
+        builder.Services.AddSingleton<ConnectionStorageService>();
 
         // Register ViewModels
         builder.Services.AddTransient<ConnectionViewModel>();
@@ -31,6 +32,7 @@ public static class MauiProgram
         builder.Services.AddTransient<CollectionsViewModel>();
         builder.Services.AddTransient<DocumentsViewModel>();
         builder.Services.AddTransient<DocumentDetailViewModel>();
+        builder.Services.AddTransient<SettingsViewModel>();
 
         // Register Pages
         builder.Services.AddTransient<ConnectionPage>();
@@ -38,6 +40,7 @@ public static class MauiProgram
         builder.Services.AddTransient<CollectionsPage>();
         builder.Services.AddTransient<DocumentsPage>();
         builder.Services.AddTransient<DocumentDetailPage>();
+        builder.Services.AddTransient<SettingsPage>();
 
         return builder.Build();
     }
